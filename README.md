@@ -18,6 +18,12 @@ tender the same thing, **what one more bidder is worth** in € per year with a 
 **which suppliers** to invite, and **which clauses** resemble ones a procurement tribunal has annulled,
 quoted verbatim from rulings that Mistral models read and structure.
 
+![Overview: median discount by number of bids, and the contracts that should start re-tendering now](docs/screenshots/overview.png)
+
+![Memo for one contract: when to start, what one more bidder is worth, how other hospitals tender it](docs/screenshots/memo.png)
+
+<sub>Screenshots from `make demo`: invented hospitals, suppliers and contracts.</sub>
+
 ## Try it in one minute (no key, no download)
 
 ```bash
