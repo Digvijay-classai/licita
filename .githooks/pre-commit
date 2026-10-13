@@ -1,0 +1,12 @@
+#!/bin/sh
+# 1. Anonymity: the tree must not name buyers, region or tribunal (hashed denylist; fast, always runs).
+uv run --quiet python -m licita.anon check || {
+  echo "pre-commit: anonymisation check failed (see above); move names into a profile under profiles/." >&2
+  exit 1
+}
+# 2. Secrets: gitleaks blocks when installed. CI always runs it, so a missing local binary only warns.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks not installed (brew install gitleaks); CI will still scan for secrets." >&2
+  exit 0
+fi
+exec gitleaks git --pre-commit --staged --redact --no-banner

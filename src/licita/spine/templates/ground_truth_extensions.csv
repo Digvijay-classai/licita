@@ -1,0 +1,7 @@
+# One row per contract the procurement team has answered for. Save as data/truth/<BUYER_KEY>_extensions.csv (outside git).
+# buyer_key: the buyer's key in the profile (e.g. HOSP_A)  folder_id: PLACSP expediente id as the radar shows it
+# status: extended | extension_pending | replaced | replaced_by_framework | in_progress | lapsed | ended_no_need
+# successor_folder_id: the new expediente when known  extended_until: ISO date, required when status = extended
+# note: free text  source: who answered (role, not name)  recorded_on: ISO date of the answer
+buyer_key,folder_id,status,successor_folder_id,extended_until,note,source,recorded_on
+HOSP_A,0001/2023,extended,,2027-06-30,example row: first extension signed,procurement team,2026-01-15

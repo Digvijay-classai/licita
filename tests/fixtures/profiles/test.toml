@@ -1,0 +1,38 @@
+# Synthetic profile used by the test suite. Every name here is invented.
+name = "test"
+
+[region]
+label = "Región de Ejemplo"
+nuts_prefix = "ES99"
+buyer_chain_re = "comunidad de ejemplo"
+central_buyer_re = "central de compras de ejemplo"
+health_terms = ["SALUDEJ"]
+boilerplate_terms = ["villaejemplo", "santa", "ficticia"]
+
+[tribunal]
+name = "Tribunal de Recursos de Ejemplo"
+short = "TRE"
+base_url = "https://tribunal.example/resoluciones"
+first_year = 2019
+year_url = "{base}/anio-{year}"
+ruling_url = "{base}/anio-{year}/res-{num}"
+number_re = "res-(\\d+)\""
+pdf_re = "href=\"([^\"]*res-{num}[^\"]*\\.pdf)\""
+stop_terms = ["Volver", "Imprimir esta página"]
+[tribunal.labels]
+fecha = "Dictada el:"
+organo = "Entidad contratante:"
+acto = "Recurso contra:"
+objeto = "Objeto del expediente:"
+tipo_contrato = "Clase de contrato:"
+tipo_resolucion = "Fallo:"
+
+[buyers.HOSP_A]
+name = "Hospital Universitario Santa Ficticia"
+short = "Santa Ficticia"
+nif = "Q0000001A"
+
+[buyers.HOSP_B]
+name = "Hospital General de Villaejemplo"
+short = "General"
+nif = "Q0000002B"

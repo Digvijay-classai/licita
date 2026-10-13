@@ -1,0 +1,47 @@
+# Deployment profile: everything that ties a build to one region and its buyers.
+# Copy this file to profiles/<name>.toml (gitignored) and select it with LICITA_PROFILE=<name>.
+# Placeholders below are deliberately fictitious: NIFs use province code 00 and do not validate.
+
+name = "example"
+
+[region]
+label = "Región de Ejemplo"      # shown in memos: "In <label>"
+nuts_prefix = "ES99"            # NUTS prefix of the region (ES99 is fictitious; "" disables the column)
+buyer_chain_re = ""             # regex on a buyer's parent-organisation chain to keep at parse time ("" = none)
+central_buyer_re = ""           # regex for the region's central purchasing bodies (framework absorption)
+health_terms = []               # extra words that mark a buyer as health-sector (regional service acronyms)
+boilerplate_terms = []          # extra words dropped before title matching (city and hospital names)
+
+[tribunal]
+name = "regional procurement tribunal"
+short = "Tribunal"
+base_url = ""                   # resolutions listing URL; required only for `licita.rulings.scrape`
+first_year = 2015               # first year to scrape (whenever the tribunal started publishing online)
+# How the tribunal's website is laid out. Templates over {base}, {year} and {num}; regexes may use {year}/{num}.
+year_url = "{base}/{year}"                       # the listing of one year's rulings
+ruling_url = "{base}/{year}/{num}"               # one ruling's page
+number_re = "/{year}/(\\d+)"                     # reads ruling numbers off the year listing
+pdf_re = "href=\"([^\"]+\\.pdf)\""                # captures the PDF href on a ruling page (relative or absolute)
+stop_terms = []                                  # words that end a field's text on the page (menus, footers)
+[tribunal.labels]                                # field labels as they appear on a ruling page
+fecha = "Fecha:"
+organo = "Órgano:"
+acto = "Acto:"
+objeto = "Objeto:"
+tipo_contrato = "Contrato:"
+tipo_resolucion = "Resolución:"
+
+[buyers.HOSP_A]
+name = "Hospital A"
+short = "Hospital A"
+nif = "Q0000001A"
+
+[buyers.HOSP_B]
+name = "Hospital B"
+short = "Hospital B"
+nif = "Q0000002B"
+
+# Optional model overrides per task (extract, lint, memo, chat, ocr). Environment variables
+# LICITA_MODEL_<TASK> win over these, which win over the provider defaults (`licita config`).
+[models]
+# extract = "mistral-small-latest"

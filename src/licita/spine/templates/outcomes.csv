@@ -1,0 +1,7 @@
+# One row per thing that happened after a memo. Save as data/truth/outcomes.csv (outside git).
+# recorded_on: ISO date  buyer_key: profile key  folder_id: expediente when it concerns one (optional)
+# event: memo_delivered | file_opened_before_start_by | market_consultation_run | decision_changed | tender_published | lots_received_bids | extension_avoided | other
+# value_eur: annual value touched (optional)  bids: bids received when the event is lots_received_bids (optional)
+# note: free text  source: who reported it (role, not name)
+recorded_on,buyer_key,folder_id,event,value_eur,bids,note,source
+2026-01-15,HOSP_A,0001/2023,memo_delivered,140000,,example row: maintenance memo delivered,procurement team

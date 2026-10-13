@@ -1,0 +1,3 @@
+# Tracked files the anonymity phrase scan skips. One path per line, reason after '#'. Keep this list short;
+# every entry is a conscious exception reviewed in CI logs. Binary and size checks still apply.
+src/licita/spine/city_nuts2.csv  # national geographic fact table: every NUTS-2 region, so it names none in particular

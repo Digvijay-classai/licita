@@ -1,0 +1,55 @@
+[project]
+name = "licita"
+version = "0.1.0"
+description = "Competition memos for Spanish public-hospital procurement, built on open data and Mistral AI."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "duckdb>=1.1",
+    "pandas>=2.2",
+    "pyarrow>=17",
+    "lxml>=5.3",
+    "httpx>=0.27",
+    "certifi>=2024.8",
+    "numpy>=2.5.3",
+]
+
+[project.scripts]
+licita = "licita.cli:main"
+
+[project.optional-dependencies]
+app = ["streamlit>=1.40", "plotly>=5.24"]
+llm = ["jsonschema>=4.23"]
+ml = ["scikit-learn>=1.5"]
+docs = ["pdfplumber>=0.11", "rapidfuzz>=3.10"]
+chat = ["sqlglot>=25"]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "ruff>=0.7", "pyright>=1.1.390"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/licita"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+# Pinned so CI does not change with ruff's default rule set. Long lines are left to review.
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.pyright]
+include = ["src/licita/llm", "src/licita/profile.py", "src/licita/errors.py", "src/licita/evals", "src/licita/anon.py",
+           "src/licita/rulings/db.py", "src/licita/cli.py"]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"

@@ -1,0 +1,22 @@
+# USD per million tokens. Update `checked` and set `verified = true` after comparing with the source.
+# Indicative figures (trackers disagree; Medium per the Medium 3 list price). Verify before reporting cost.
+checked = "2026-10-09"
+verified = false
+source = "https://mistral.ai/pricing"
+batch_discount = 0.5          # Batch API: 50% off input and output
+
+[models.mistral-small]
+input = 0.15
+output = 0.60
+
+[models.mistral-medium]
+input = 0.40
+output = 2.00
+
+[models.mistral-large]
+input = 0.50
+output = 1.50
+
+[models.magistral-medium]
+input = 2.00
+output = 5.00

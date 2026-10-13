@@ -1,0 +1,15 @@
+.git
+.venv
+data
+spines
+runs
+out
+demo
+private
+profiles/*.toml
+!profiles/example.toml
+**/__pycache__
+.pytest_cache
+.ruff_cache
+.env
+.env.*

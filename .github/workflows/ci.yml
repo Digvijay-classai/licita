@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: lint · types · anonymity · tests · eval replay
+    runs-on: ubuntu-latest
+    env:
+      MISTRAL_API_KEY: ""        # offline by design: no network calls, no credentials
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-extras --frozen
+      - run: uv run ruff check src tests kaggle
+      - run: uv run pyright
+      - name: anonymisation gate (no buyer, region or tribunal names)
+        if: env.LICITA_ANON_KEY != ''
+        env:
+          LICITA_ANON_KEY: ${{ secrets.LICITA_ANON_KEY }}
+        run: uv run licita anon check
+      - name: anonymisation gate skipped (no key on forks; a maintainer runs it before merging)
+        if: env.LICITA_ANON_KEY == ''
+        env:
+          LICITA_ANON_KEY: ${{ secrets.LICITA_ANON_KEY }}
+        run: echo "::notice::anonymity gate not run (LICITA_ANON_KEY unavailable in this context)"
+      - name: no leftover vendor code from before the Mistral migration
+        run: |
+          if git grep -n -i -E 'anthropic|claude' -- src tests kaggle pyproject.toml; then
+            echo "::error::found pre-Mistral provider references"; exit 1; fi
+      - name: tests (includes demo build + headless render of every app page)
+        run: uv run pytest -q
+      - name: offline evaluation replay (synthetic fixtures)
+        run: uv run licita evals replay tests/fixtures/evals >> "$GITHUB_STEP_SUMMARY"
+
+  secrets:
+    name: secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  image:
+    name: container image builds and serves the demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t licita:ci .
+      - name: demo answers its health check
+        run: |
+          docker run -d --name licita -p 8501:8501 licita:ci
+          for i in $(seq 1 60); do curl -fsS localhost:8501/_stcore/health && exit 0; sleep 2; done
+          docker logs licita; exit 1

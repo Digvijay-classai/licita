@@ -1,0 +1,48 @@
+# docker compose up app                     demo on http://localhost:8501 (no key needed)
+# docker compose --profile vllm up          self-hosted Mistral Small on a local NVIDIA GPU + app wired to it
+services:
+  app:
+    build: .
+    image: licita:local
+    ports: ["8501:8501"]
+    environment:
+      MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}        # optional: hosted Mistral for extraction/evals
+      LICITA_LLM_PROVIDER: ${LICITA_LLM_PROVIDER:-mistral}
+    read_only: true
+    tmpfs: ["/tmp", "/app/demo", "/home/licita"]
+    security_opt: ["no-new-privileges:true"]
+
+  # Sovereign path: weights and inference stay on this machine. Needs an NVIDIA GPU with ~55 GB VRAM for
+  # the 24B model in bf16 (or set VLLM_MODEL to a quantised build). HF_TOKEN only if the repo is gated.
+  vllm:
+    profiles: ["vllm"]
+    image: vllm/vllm-openai:v0.9.2
+    command: >
+      --model ${VLLM_MODEL:-mistralai/Mistral-Small-3.2-24B-Instruct-2506}
+      --tokenizer-mode mistral --config-format mistral --load-format mistral
+      --max-model-len 32768
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+    ports: ["8000:8000"]
+    volumes: ["hf-cache:/root/.cache/huggingface"]
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices: [{driver: nvidia, count: all, capabilities: [gpu]}]
+
+  app-local:
+    profiles: ["vllm"]
+    image: licita:local
+    build: .
+    depends_on: [vllm]
+    ports: ["8502:8501"]
+    environment:
+      LICITA_LLM_PROVIDER: local
+      LICITA_LLM_BASE_URL: http://vllm:8000/v1
+      LICITA_LOCAL_MODEL: ${VLLM_MODEL:-mistralai/Mistral-Small-3.2-24B-Instruct-2506}
+    read_only: true
+    tmpfs: ["/tmp", "/app/demo", "/home/licita"]
+
+volumes:
+  hf-cache:

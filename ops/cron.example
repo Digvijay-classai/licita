@@ -1,0 +1,4 @@
+# Linux / VPS equivalent of `make schedule-install`. Edit the three paths, then `crontab -e` and paste.
+# 06:30 every day: fetch changed PLACSP archives, rebuild the spine when something changed, refresh fact sheets.
+# `licita sync` holds a lock, so an overlapping run exits at once; the log line per run is data/state/sync_log.jsonl.
+30 6 * * * cd /srv/licita && LICITA_PROFILE=mine /usr/local/bin/uv run licita sync --facts >> runs/sync/cron.log 2>&1

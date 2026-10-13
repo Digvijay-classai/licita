@@ -1,0 +1,14 @@
+# Theme tokens from DESIGN.md (light is the default for meetings and projectors).
+[theme]
+base = "light"
+primaryColor = "#1D3A8A"
+backgroundColor = "#FAF8F3"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#1B1A17"
+
+[client]
+toolbarMode = "minimal"
+showSidebarNavigation = false
+
+[browser]
+gatherUsageStats = false

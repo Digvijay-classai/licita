@@ -1,0 +1,36 @@
+# Raw downloads and built artefacts (rebuilt from public data)
+data/
+spines/
+runs/
+*.zip
+*.parquet
+*.duckdb
+*.duckdb.wal
+
+# Hospital-specific outputs never leave the laptop (P3)
+out/
+memos_out/
+
+# Real deployment profiles and private working notes name buyers and regions
+profiles/*.toml
+!profiles/example.toml
+private/
+
+# Secrets
+.env
+.env.*
+.streamlit/secrets.toml
+*.pem
+
+# Python / tooling
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+.gstack/
+
+
+# Demo data is generated on demand (python -m licita.demo build)
+demo/
