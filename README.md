@@ -2,10 +2,12 @@
 
 **Competition evidence for Spanish public-hospital procurement, built on open data and Mistral AI.**
 
-[![ci](https://github.com/Digvijay-classai/licita/actions/workflows/ci.yml/badge.svg)](https://github.com/Digvijay-classai/licita/actions/workflows/ci.yml)
+[![ci](https://github.com/digvijaysingh-ai/licita/actions/workflows/ci.yml/badge.svg)](https://github.com/digvijaysingh-ai/licita/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-3.12-1D3A8A)
 ![models](https://img.shields.io/badge/models-Mistral%20%7C%20self--hosted-1D3A8A)
 ![licence](https://img.shields.io/badge/licence-Apache--2.0-1D3A8A)
+
+**Case study:** [djcrafted.com/work/licita](https://djcrafted.com/work/licita/) · **Author:** [Digvijay Singh](https://djcrafted.com)
 
 Across Spanish public health buyers, an open-procedure lot that receives **one bid is awarded at a median
 discount of 0.0 %**. With two bids the median is 6.9 %, with four it is **13.8 %** (140,952 lots from the
