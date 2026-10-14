@@ -55,9 +55,30 @@ on your GPU and `LICITA_LLM_PROVIDER=local` sends the same requests there. Nothi
 
 ## Results
 
-| Evaluation | Status |
+First live run, 2026-10-14: ruling extraction on 39 tender-document rulings sampled by `make label`
+(stratified by outcome), scored with `make evals-tribunal`. Brackets are Wilson 95 % intervals.
+
+| Model (dated id) | Valid output | Outcome = tribunal's label | Quotes verified | Cost / 1,000 rulings | Latency p50 / p95 |
+|---|---|---|---|---|---|
+| `ministral-3b-2512` | 100 % [91–100] (39/39) | 87 % [73–94] (34/39) | 71 % [55–84] (25/35) | $0.64 | 2.2 s / 3.9 s |
+| `ministral-8b-2512` | 100 % [91–100] (39/39) | 92 % [80–97] (36/39) | 68 % [54–79] (34/50) | $0.97 | 5.5 s / 11.0 s |
+| `ministral-14b-2512` | 100 % [91–100] (39/39) | 92 % [80–97] (36/39) | 88 % [75–95] (37/42) | $1.28 | 5.7 s / 17.0 s |
+
+- **Reference is the tribunal's own published outcome, not hand labels.** Ground precision, recall and
+  decision per ground need a procurement specialist's labels and are **not measured yet**; that is the
+  number the clause linter depends on. Method: [ADR 0005](docs/engineering/adr/0005-evaluation-method.md).
+- **Why Ministral.** Mistral Small 4 and Medium 3.5 were not enabled on the evaluation workspace (0 requests
+  per minute) and Large is outside its tier; they run through the same command once enabled.
+- 8B and 14B miss the same 3 rulings (published label upheld, models say partly upheld), which may be the
+  label rather than the models. A repeat run gave identical outcomes for 8B and 14B (38/39 for 3B);
+  verified quotes moved by up to 7 points between runs.
+- Prices checked 2026-10-14 against Mistral's pricing pages (USD per million tokens, in = out: 3B $0.10,
+  8B $0.15, 14B $0.20); synchronous calls, no batch discount. Prompt hash `b6474d49462871fa`.
+
+| Other evaluations | Status |
 |---|---|
-| Mistral Small / Medium / Large and self-hosted Small on a hand-labelled golden set: validity, outcome, ground precision and recall, decision per ground, verified quotes, € per 1,000 rulings, latency, all with Wilson 95 % intervals | harness and CI replay done; first live run is `make label` then `make evals` |
+| Ground-level metrics on an expert-labelled golden set (30–50 rulings, ~10 double-labelled) | pending a domain labeller |
+| Self-hosted Mistral Small 3.2 (vLLM) | not run: needs a GPU host |
 | Open 14B baseline (Qwen3, Kaggle T4s, same prompt and schema) | measured and rejected: 0/12 decisions per ground correct ([EVALS](docs/engineering/EVALS.md)) |
 
 ## Why it is built the way it is

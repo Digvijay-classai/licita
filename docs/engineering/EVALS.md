@@ -23,6 +23,7 @@ Run it with a key:
 make label                                   # 40 rulings sampled, stratified by tribunal outcome
 #   label them (guide below), move labelled lines to private/golden/rulings.jsonl
 make evals MODELS=mistral-small-latest,mistral-medium-latest,mistral-large-latest
+make evals-tribunal MODELS=...              # no hand labels: outcome vs the tribunal's published label
 LICITA_LLM_PROVIDER=local make evals MODELS=mistralai/Mistral-Small-3.2-24B-Instruct-2506   # self-hosted
 ```
 
@@ -42,8 +43,31 @@ Every proportion carries a Wilson 95% interval. Precision, recall and decision a
 below 10 valid outputs. The report adds agreement with the tribunal's own published outcome (an
 independent check on our labels) and, for double-labelled rulings, Cohen's kappa between labellers.
 
-**Results:** pending the first live run. CI runs the same scoring on synthetic fixtures
-(`tests/fixtures/evals/`, marked as synthetic in every report); those numbers are not model results.
+### Results: tribunal reference, 2026-10-14
+
+`make evals-tribunal MODELS=ministral-3b-2512,ministral-8b-2512,ministral-14b-2512` on the 39 sampled
+rulings with a mappable published outcome (one of 40 had none). Reference: the tribunal's published outcome
+(ADR 0005 amendment); ground columns are withheld until an expert labels the golden set.
+
+| Model (dated id) | Valid output | Outcome = tribunal's label | Quotes verified | Cost / 1,000 rulings | Latency p50 / p95 |
+|---|---|---|---|---|---|
+| `ministral-3b-2512` | 100 % [91–100] (39/39) | 87 % [73–94] (34/39) | 71 % [55–84] (25/35) | $0.64 | 2.2 s / 3.9 s |
+| `ministral-8b-2512` | 100 % [91–100] (39/39) | 92 % [80–97] (36/39) | 68 % [54–79] (34/50) | $0.97 | 5.5 s / 11.0 s |
+| `ministral-14b-2512` | 100 % [91–100] (39/39) | 92 % [80–97] (36/39) | 88 % [75–95] (37/42) | $1.28 | 5.7 s / 17.0 s |
+
+- Small 4 and Medium 3.5 returned HTTP 429 with a per-model limit of 0 requests/minute on the evaluation
+  workspace; Large returned 403 (tier). Same command once they are enabled.
+- Outcome misses: 8B and 14B, 3 rulings each, the same 3 (published "Estimación", predicted partly upheld).
+  3B adds both loss-of-object terminations (predicted dismissed; reference inadmissible) and one upheld
+  ruling read as dismissed. Whether the published label or the models are right on the shared 3 is a
+  question for the expert labeller.
+- Stability: an earlier identical run (stored under the `-latest` aliases before alias pinning was fixed)
+  gave the same outcome on 39/39 rulings for 8B and 14B, 38/39 for 3B; verified quotes 72 / 75 / 84 %.
+- Cost from the dated price table (checked and confirmed 2026-10-14); all calls synchronous. Prompt hash
+  `b6474d49462871fa`.
+
+CI runs the same scoring on synthetic fixtures (`tests/fixtures/evals/`, marked as synthetic in every
+report); those numbers are not model results.
 
 ## Labelling guide (golden set)
 

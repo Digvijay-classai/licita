@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help setup demo demo-build test lint typecheck check anon config profile app backfill status build \
         sync dq truth export refresh schedule-install schedule-uninstall schedule-status \
-        scrape pdfs extract collect evals evals-replay label kaggle-export kaggle-import \
+        scrape pdfs extract collect evals evals-tribunal evals-replay label kaggle-export kaggle-import \
         docker docker-up vllm-up smoke-mistral smoke-local
 
 PROFILE ?= $(or $(LICITA_PROFILE),example)
@@ -118,6 +118,9 @@ label:            ## Sample 40 rulings for hand labelling -> private/golden/to_l
 
 evals:            ## Live evaluation on the private golden set (costs money), e.g. make evals MODELS=a,b
 	uv run licita evals live --models $(MODELS)
+
+evals-tribunal:   ## Live evaluation, outcome vs the tribunal's published label on the make label sample (costs money)
+	uv run licita evals live --reference tribunal --models $(MODELS)
 
 kaggle-export:    ## Open-model baseline: dataset + notebook for Kaggle GPUs
 	uv run licita baseline export
