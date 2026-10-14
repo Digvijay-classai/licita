@@ -73,6 +73,12 @@ report); those numbers are not model results.
 
 The golden set stays private (`private/golden/rulings.jsonl`): real rulings name contracting bodies.
 
+For a domain expert who does not use the command line: `make label-kit` (or `L=B N=10` for the second
+labeller) writes one plain-text sheet per ruling, operative part first, a Spanish guide
+([LABELLING_es.md](LABELLING_es.md)) and a `;`-separated answer sheet that opens in Spanish Excel. The
+sheets contain no model output and no tribunal metadata label. `make label-import ANSWERS=... L=A` checks
+the filled sheet, lists every bad row, and merges it (labeller B attaches as `second`).
+
 1. Read the whole ruling. Label only grounds the tribunal **decides** (a "motivo" with its own
    reasoning and conclusion). Arguments it declines to examine are `not_decided`.
 2. `ground`: one category per decided ground (see `GROUNDS` in `src/licita/rulings/extract.py`). If one
