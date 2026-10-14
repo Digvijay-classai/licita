@@ -1,22 +1,43 @@
 # USD per million tokens. Update `checked` and set `verified = true` after comparing with the source.
-# Indicative figures (trackers disagree; Medium per the Medium 3 list price). Verify before reporting cost.
-checked = "2026-10-09"
-verified = false
-source = "https://mistral.ai/pricing"
+# 2026-10-14: Small 4 (mistral-small-2603) and Medium 3.5 (mistral-medium-2604) from docs.mistral.ai/inference/pricing;
+# Large 3 and the 50% batch discount from mistral.ai/pricing. Rows are prefixes; dated rows win over family rows.
+checked = "2026-10-14"
+verified = true
+source = "https://mistral.ai/pricing and https://docs.mistral.ai/inference/pricing"
 batch_discount = 0.5          # Batch API: 50% off input and output
 
 [models.mistral-small]
 input = 0.15
 output = 0.60
 
-[models.mistral-medium]
+[models.mistral-medium]       # Medium 3.5 (mistral-medium-2604, the current alias target)
+input = 1.50
+output = 7.50
+
+[models.mistral-medium-2505]  # Medium 3, retired 2026-08-31; kept to cost old rows
 input = 0.40
 output = 2.00
 
-[models.mistral-large]
+[models.mistral-medium-2508]  # Medium 3.1, retired 2026-08-31
+input = 0.40
+output = 2.00
+
+[models.mistral-large]        # Large 3
 input = 0.50
 output = 1.50
 
-[models.magistral-medium]
+[models.magistral-medium]     # not re-checked 2026-10-14; the -latest alias now points to Medium 3.5
 input = 2.00
 output = 5.00
+
+[models.ministral-14b]        # Ministral 3 14B (ministral-14b-2512), docs.mistral.ai/inference/pricing 2026-10-14
+input = 0.20
+output = 0.20
+
+[models.ministral-8b]         # Ministral 3 8B (ministral-8b-2512)
+input = 0.15
+output = 0.15
+
+[models.ministral-3b]         # Ministral 3 3B (ministral-3b-2512)
+input = 0.10
+output = 0.10

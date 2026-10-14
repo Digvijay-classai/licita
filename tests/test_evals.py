@@ -69,3 +69,21 @@ def test_score_without_any_extractions_explains_how_to_run(tmp_path):
     con = extract._db(tmp_path / "r.duckdb")
     with pytest.raises(run.EvalError, match="no model has extractions"):
         run.report(con, run.load_golden(FIX / "golden.jsonl"))
+
+
+def test_tribunal_reference_scores_outcome_and_withholds_ground_metrics(tmp_path):
+    import json
+    import shutil
+    for f in ("rulings.jsonl", "responses.jsonl"):
+        shutil.copy(FIX / f, tmp_path / f)
+    sample = tmp_path / "to_label.jsonl"
+    sample.write_text("".join(json.dumps({"id": r["id"], "tribunal_label": r.get("tipo_resolucion")}) + "\n"
+                              for r in map(json.loads, (FIX / "rulings.jsonl").read_text().splitlines())))
+    gold = run.tribunal_golden(sample)
+    assert gold and all(g["grounds"] is None and g["outcome"] != "unknown" for g in gold)
+    (tmp_path / "golden.jsonl").write_text("".join(json.dumps(g) + "\n" for g in gold))
+    text = run.replay(tmp_path)
+    assert "Reference: the tribunal's published outcome" in text
+    assert text.count(run.PENDING) >= 3 * 2      # three ground columns per model row
+    with pytest.raises(run.EvalError, match="make label"):
+        run.tribunal_golden(tmp_path / "missing.jsonl")

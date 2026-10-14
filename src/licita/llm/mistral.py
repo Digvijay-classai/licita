@@ -11,6 +11,7 @@ import base64
 import contextlib
 import json
 import os
+import re
 import time
 from collections.abc import Iterator
 
@@ -53,6 +54,8 @@ def api_key() -> str:
                        "export the real key, or `unset MISTRAL_API_KEY` to use a key-free mode")
     return key.strip()
 
+
+_DATED = re.compile(r"-\d{4}$")
 
 class MistralProvider:
     name = "mistral"
@@ -98,8 +101,10 @@ class MistralProvider:
             self._aliases = {}
             for m in r.json().get("data", []):
                 for alias in m.get("aliases") or []:
-                    # several cards can list the same alias; the one whose id differs from the alias wins
-                    if alias != m["id"]:
+                    # every alias of a model has its own card listing all its siblings, so "differs from the
+                    # alias" is not enough: a dated id (…-2603) beats any undated sibling (magistral-small-latest)
+                    if alias != m["id"] and not _DATED.search(alias) and (alias not in self._aliases
+                                                                         or _DATED.search(m["id"])):
                         self._aliases[alias] = m["id"]
         return self._aliases.get(model, model)
 

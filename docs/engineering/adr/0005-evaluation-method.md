@@ -15,3 +15,12 @@
 - Results are reproducible and comparable across model updates; small-n uncertainty is visible rather
   than hidden behind a point estimate.
 - The golden set cannot be published (real rulings name buyers); the method and code can.
+
+## Amendment (2026-10-14): tribunal reference first, expert labels second
+- No domain-qualified labeller was available, and labels drafted by a model would make the golden set
+  measure agreement with that model. Ground-level labels wait for a procurement specialist.
+- Until then, `make evals-tribunal` scores the `make label` sample against the tribunal's **published
+  outcome** only: valid output, outcome accuracy, verified quotes, cost and latency. Ground precision,
+  recall and decision per ground are printed as "pending expert labels", never as numbers.
+- Rulings whose published label does not map to an outcome are dropped. Loss-of-object terminations map
+  to `inadmissible`; a model answering `other` for them counts as wrong (stated with every result).

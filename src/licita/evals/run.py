@@ -4,6 +4,8 @@
   python -m licita.evals.run live   --models mistral-small-latest,mistral-medium-latest [--golden FILE]
                                                                         call each model on golden rulings, then score
   python -m licita.evals.run replay FIXTURE_DIR                          offline: cached responses -> temp db -> score
+  add --reference tribunal to score/live to use the labelling sample (`make label`) with the tribunal's
+  published outcome as the reference: no hand labels needed, ground metrics are withheld.
 
 Golden set: JSONL, one ruling per line (default `private/golden/rulings.jsonl`, or LICITA_GOLDEN). It stays
 private because real rulings name contracting bodies. Line format:
@@ -30,6 +32,8 @@ from licita.rulings import extract
 from licita.rulings.classify import outcome as tribunal_outcome
 
 DEFAULT_GOLDEN = ROOT / "private" / "golden" / "rulings.jsonl"
+DEFAULT_SAMPLE = ROOT / "private" / "golden" / "to_label.jsonl"
+PENDING = "pending expert labels"
 
 
 class EvalError(LicitaError):
@@ -53,6 +57,18 @@ def load_golden(path: Path) -> list[dict]:
     return rows
 
 
+def tribunal_golden(path: Path) -> list[dict]:
+    """Reference rows from the labelling sample: outcome = the tribunal's published label, grounds unknown.
+
+    Rulings whose published label does not map to an outcome are dropped (they cannot be scored)."""
+    if not path.is_file():
+        raise EvalError(f"no labelling sample at {path}", "the tribunal reference uses the sampled rulings",
+                        "run `make label` first")
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return [{"id": r["id"], "outcome": o, "grounds": None} for r in rows
+            if (o := tribunal_outcome(r.get("tribunal_label"))) != "unknown"]
+
+
 @dataclass
 class ModelScore:
     model: str
@@ -68,10 +84,12 @@ class ModelScore:
     p50_s: float | None = None
     p95_s: float | None = None
     statuses: dict[str, int] = field(default_factory=dict)
+    grounds_labelled: bool = True
 
     def row(self) -> list[str]:
         small = self.valid.k < MIN_N_FOR_PR
-        pr = (lambda r: f"n<{MIN_N_FOR_PR}") if small else (lambda r: r.fmt())
+        pr = ((lambda r: PENDING) if not self.grounds_labelled
+              else (lambda r: f"n<{MIN_N_FOR_PR}") if small else (lambda r: r.fmt()))
         money = "–" if self.usd_per_1000 is None else f"${self.usd_per_1000:,.2f}"
         lat = "–" if self.p50_s is None else f"{self.p50_s:.1f}s / {self.p95_s:.1f}s"
         return [self.model, self.valid.fmt(), self.outcome.fmt(), pr(self.precision), pr(self.recall),
@@ -83,7 +101,7 @@ HEADER = ["model", "valid output", "outcome", "ground precision", "ground recall
 
 
 def score_model(con, model: str, gold: list[dict]) -> ModelScore:
-    s = ModelScore(model, len(gold))
+    s = ModelScore(model, len(gold), grounds_labelled=all(g["grounds"] is not None for g in gold))
     tp = npred = ngold = hc = hn = qk = qn = ok_out = tri_k = tri_n = 0
     costs: list[float] = []
     latencies: list[float] = []
@@ -110,13 +128,15 @@ def score_model(con, model: str, gold: list[dict]) -> ModelScore:
         if tipo:
             tri_n += 1
             tri_k += int(pred["outcome"] == tribunal_outcome(tipo))
+        q = con.execute("select count(quote), count(*) filter (where quote_verified) from ruling_grounds "
+                        "where id = ? and model = ?", [g["id"], model]).fetchone()
+        qn, qk = qn + q[0], qk + q[1]
+        if g["grounds"] is None:
+            continue
         a, b, c3 = ground_counts(g["grounds"], pred["grounds"])
         tp, npred, ngold = tp + a, npred + b, ngold + c3
         k, n = holding_matches(g["grounds"], pred["grounds"])
         hc, hn = hc + k, hn + n
-        q = con.execute("select count(quote), count(*) filter (where quote_verified) from ruling_grounds "
-                        "where id = ? and model = ?", [g["id"], model]).fetchone()
-        qn, qk = qn + q[0], qk + q[1]
     done = s.statuses.get("done", 0)
     s.valid = Rate(done, attempted)
     s.outcome = Rate(ok_out, done)
@@ -150,8 +170,13 @@ def report(con, gold: list[dict], models: list[str] | None = None, title: str = 
         raise EvalError("no model has extractions for the golden rulings", "nothing to score",
                         "run `python -m licita.evals.run live --models ...` (needs MISTRAL_API_KEY)")
     scores = [score_model(con, m, gold) for m in models]
-    lines = [f"# {title}", "", f"Golden set: {len(gold)} rulings. Intervals are Wilson 95%. "
-             f"Precision/recall/decision accuracy need at least {MIN_N_FOR_PR} valid outputs.", "",
+    if all(g["grounds"] is None for g in gold):
+        intro = (f"Reference: the tribunal's published outcome for {len(gold)} sampled rulings (no hand labels). "
+                 f"Outcome is scored against it; ground metrics are {PENDING}. Intervals are Wilson 95%.")
+    else:
+        intro = (f"Golden set: {len(gold)} rulings. Intervals are Wilson 95%. "
+                 f"Precision/recall/decision accuracy need at least {MIN_N_FOR_PR} valid outputs.")
+    lines = [f"# {title}", "", intro, "",
              "| " + " | ".join(HEADER) + " |", "|" + "---|" * len(HEADER)]
     lines += ["| " + " | ".join(s.row()) + " |" for s in scores]
     lines += ["", "Outcome agreement with the tribunal's own published label (independent of our labels):"]
@@ -226,6 +251,9 @@ def main(argv: list[str] | None = None) -> int:
     lv = sub.add_parser("live")
     lv.add_argument("--models", required=True)
     lv.add_argument("--golden")
+    for p in (s, lv):
+        p.add_argument("--reference", choices=["golden", "tribunal"], default="golden",
+                       help="tribunal: score outcome against the published label of the `make label` sample")
     rp = sub.add_parser("replay")
     rp.add_argument("fixture_dir", type=Path)
     args = ap.parse_args(argv)
@@ -233,7 +261,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "replay":
             print(replay(args.fixture_dir))
             return 0
-        gold = load_golden(golden_path(args.golden))
+        gold = (tribunal_golden(Path(args.golden or DEFAULT_SAMPLE)) if args.reference == "tribunal"
+                else load_golden(golden_path(args.golden)))
         models = [m.strip() for m in args.models.split(",")] if args.models else None
         if args.cmd == "live":
             models = live(models or [], gold)

@@ -121,6 +121,15 @@ def test_resolve_model_pins_aliases_to_dated_ids():
     assert len(fake.seen) == 1     # cached
 
 
+def test_resolve_model_prefers_the_dated_id_when_every_alias_has_its_own_card():
+    group = ["mistral-small-2603", "mistral-small-latest", "magistral-small-latest"]
+    cards = [{"id": i, "aliases": [a for a in group if a != i]} for i in reversed(group)]
+    p, _ = provider({("GET", "/v1/models"): {"data": cards}})
+    assert p.resolve_model("mistral-small-latest") == "mistral-small-2603"
+    assert p.resolve_model("magistral-small-latest") == "mistral-small-2603"
+    assert p.resolve_model("mistral-small-2603") == "mistral-small-2603"    # a dated id is never remapped
+
+
 # ---------------------------------------------------------------- batch
 def test_submit_batch_uploads_jsonl_then_creates_job():
     p, fake = provider({("POST", "/v1/files"): {"id": "file-in"},
