@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help setup demo demo-build test lint typecheck check anon config profile app backfill status build \
         sync dq truth export refresh schedule-install schedule-uninstall schedule-status \
-        scrape pdfs extract collect evals evals-tribunal evals-replay label kaggle-export kaggle-import \
+        scrape pdfs extract collect evals evals-tribunal evals-replay label label-kit label-import kaggle-export kaggle-import \
         docker docker-up vllm-up smoke-mistral smoke-local
 
 PROFILE ?= $(or $(LICITA_PROFILE),example)
@@ -115,6 +115,12 @@ collect:          ## Collect finished Mistral batches (resumable)
 
 label:            ## Sample 40 rulings for hand labelling -> private/golden/to_label.jsonl
 	uv run licita label sample
+
+label-kit:        ## Reading sheets + Spanish guide + answer sheet for an expert, e.g. make label-kit L=B N=10
+	uv run licita label kit --labeller $(or $(L),A) $(if $(N),--n $(N))
+
+label-import:     ## Check a filled answer sheet and merge it, e.g. make label-import ANSWERS=respuestas.csv L=A
+	uv run licita label import $(ANSWERS) --labeller $(or $(L),A)
 
 evals:            ## Live evaluation on the private golden set (costs money), e.g. make evals MODELS=a,b
 	uv run licita evals live --models $(MODELS)
